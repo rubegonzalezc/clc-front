@@ -23,5 +23,39 @@ body {
   transition: background-color 0.4s, color 0.4s;
 }
 body.light-mode {
-  background: rgb(229 231 235)!important; /* Un tono más suave para el fondo */
+  background: rgb(229 231 235)!important; 
+}
+.modal-show {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.modal-hide {
+  opacity: 0;
+  transform: translateY(-50px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.modal-transition {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+input {
+  background-color: white;
+  color: black;
+  border: 1px solid #000000;
+}
+
+input::placeholder {
+  color: gray;
+}
+
+.dark input {
+  background-color: #2d3748; /* Darker background for dark mode */
+  color: white;
+  border: 1px solid #4a5568; /* Darker border for dark mode */
+}
+
+.dark input::placeholder {
+  color: #a0aec0; /* Lighter placeholder color for dark mode */
 }

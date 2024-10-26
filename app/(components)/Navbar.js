@@ -1,3 +1,4 @@
+// (components)/Navbar.js
 import { useState } from 'react';
 
 export default function Navbar({ openModal, toggleDarkMode }) {

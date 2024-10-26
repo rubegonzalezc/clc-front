@@ -1,9 +1,11 @@
+// page.js
 "use client";
 
 import { useEffect, useState } from 'react';
 import Navbar from './(components)/Navbar';
 import PositionModal from './(components)/PositionModal';
 import TeamModal from './(components)/TeamModal';
+import Modal from './(components)/Modal';
 import Table from './(components)/Table';
 
 export default function PeopleTable() {
@@ -150,40 +152,31 @@ export default function PeopleTable() {
       <Navbar openModal={openModal} toggleDarkMode={toggleDarkMode} />
       <br></br>
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 transition-opacity duration-300 ease-out">
-          <div className={`bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-lg w-96 text-center transform transition-transform duration-300 ease-out ${isModalOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
-            <h2 className="text-xl font-bold mb-4 dark:text-white">{modalType === 'add' ? 'Add New' : 'Remove'}</h2>
-            <ul>
-              <li className="mb-2">
-                <button className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white">
-                  Person
-                </button>
-              </li>
-              <li className="mb-2">
-                <button
-                  onClick={openTeamModal}
-                  className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
-                >
-                  Team
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={openPositionModal}
-                  className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
-                >
-                  Position
-                </button>
-              </li>
-            </ul>
-            <button
-              onClick={closeModal}
-              className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <Modal isOpen={isModalOpen} title={modalType === 'add' ? 'Add New' : 'Remove'} onClose={closeModal}>
+          <ul>
+            <li className="mb-2">
+              <button className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white">
+                Person
+              </button>
+            </li>
+            <li className="mb-2">
+              <button
+                onClick={openTeamModal}
+                className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
+              >
+                Team
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={openPositionModal}
+                className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
+              >
+                Position
+              </button>
+            </li>
+          </ul>
+        </Modal>
       )}
 
       <PositionModal

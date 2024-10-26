@@ -23,7 +23,7 @@ const PositionModal = ({ isOpen, onClose, onSubmit }) => {
         value={positionName}
         onChange={(e) => setPositionName(e.target.value)}
         placeholder="Name"
-        className="w-full px-4 py-2 mb-4 border rounded dark:bg-gray-700 dark:text-white"
+        className="w-full px-4 py-2 mb-4 border rounded dark:bg-gray-700 dark:text-white dark:border-gray-500 dark:placeholder-gray-400"
       />
       {message && <p className="mb-4 text-red-500">{message}</p>}
       <button
