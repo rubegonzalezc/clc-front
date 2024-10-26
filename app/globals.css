@@ -1,8 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import "@fontsource/inter/";
 
 :root {
+  --font-inter: 'InterVariable', sans-serif;
   --background: #ffffff;
   --foreground: #171717;
 }
@@ -17,5 +19,9 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter);
+  transition: background-color 0.4s, color 0.4s;
+}
+body.light-mode {
+  background: rgb(229 231 235)!important; /* Un tono más suave para el fondo */
 }
