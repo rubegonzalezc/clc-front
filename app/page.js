@@ -9,6 +9,7 @@ import TeamModal from './(components)/TeamModal';
 import PersonModal from './(components)/PersonModal';
 import Modal from './(components)/Modal';
 import Table from './(components)/Table';
+import SearchBar from './(components)/Searchbar'; // Importar el componente SearchBar
 import useData from './(hooks)/useData';
 import useModal from './(hooks)/useModal';
 
@@ -25,6 +26,9 @@ export default function PeopleTable() {
   const [modalType, setModalType] = useState(''); // 'add' or 'remove'
   const [message, setMessage] = useState('');
   const [currentView, setCurrentView] = useState('People'); // Estado para la vista actual
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchFilter, setSearchFilter] = useState('RUT');
+  const [editData, setEditData] = useState(null);
 
   const teamMap = teams ? Object.fromEntries(teams.map(team => [team.id, team.name])) : {};
   const positionMap = positions ? Object.fromEntries(positions.map(position => [position.id, position.name])) : {};
@@ -36,11 +40,26 @@ export default function PeopleTable() {
         position: positionMap[person.positionId] || 'Unknown'
       }))
     : [];
-      useEffect(() => {
+
+  useEffect(() => {
     console.log('People data with team and position names:', transformedPeople);
   }, [transformedPeople]);
+
   const handleEdit = (id) => {
-    console.log(`Edit ${currentView.toLowerCase()} with id: ${id}`);
+    const dataToEdit = currentView === 'People'
+      ? people.find(person => person.id === id)
+      : currentView === 'Teams'
+      ? teams.find(team => team.id === id)
+      : positions.find(position => position.id === id);
+
+    setEditData(dataToEdit);
+    if (currentView === 'People') {
+      openPersonModal();
+    } else if (currentView === 'Teams') {
+      openTeamModal();
+    } else if (currentView === 'Positions') {
+      openPositionModal();
+    }
   };
 
   const handleDelete = (id) => {
@@ -200,6 +219,90 @@ export default function PeopleTable() {
       });
   };
 
+  const handleEditPersonSubmit = (personData) => {
+    console.log('Updating person data:', personData); // Añadir este console.log para verificar los datos
+    fetch(`https://localhost:44352/api/People/${personData.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(personData),
+    })
+      .then(response => {
+        if (response.ok) {
+          setMessage('Person updated successfully');
+          setTimeout(() => {
+            closePersonModal();
+            loadPeople(); // Recargar datos después de actualizar una persona
+          }, 2000);
+        } else {
+          return response.text().then(text => {
+            throw new Error(text || response.statusText);
+          });
+        }
+      })
+      .catch(error => {
+        setMessage('Error updating person');
+        console.error('Error:', error.message);
+      });
+  };
+
+  const handleEditPositionSubmit = (positionData) => {
+    console.log('Updating position data:', positionData); // Añadir este console.log para verificar los datos
+    fetch(`https://localhost:44352/api/Positions/${positionData.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(positionData),
+    })
+      .then(response => {
+        if (response.ok) {
+          setMessage('Position updated successfully');
+          setTimeout(() => {
+            closePositionModal();
+            loadPositions(); // Recargar datos después de actualizar una posición
+          }, 2000);
+        } else {
+          return response.text().then(text => {
+            throw new Error(text || response.statusText);
+          });
+        }
+      })
+      .catch(error => {
+        setMessage('Error updating position');
+        console.error('Error:', error.message);
+      });
+  };
+
+  const handleEditTeamSubmit = (teamData) => {
+    console.log('Updating team data:', teamData); // Añadir este console.log para verificar los datos
+    fetch(`https://localhost:44352/api/Teams/${teamData.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(teamData),
+    })
+      .then(response => {
+        if (response.ok) {
+          setMessage('Team updated successfully');
+          setTimeout(() => {
+            closeTeamModal();
+            loadTeams(); // Recargar datos después de actualizar un equipo
+          }, 2000);
+        } else {
+          return response.text().then(text => {
+            throw new Error(text || response.statusText);
+          });
+        }
+      })
+      .catch(error => {
+        setMessage('Error updating team');
+        console.error('Error:', error.message);
+      });
+  };
+
   const handleViewChange = (view) => {
     setCurrentView(view);
   };
@@ -218,11 +321,34 @@ export default function PeopleTable() {
       position: position ? position.name : 'N/A'
     };
   });
+  useEffect(() => {
+    console.log('Mapped people data:', mappedPeople);
+  }, [mappedPeople]);
+  // Filtrar los datos según el término de búsqueda y el filtro seleccionado
+  const filteredData = mappedPeople.filter(person => {
+    if (currentView === 'People') {
+      const value = person[searchFilter];
+      return value ? value.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    } else if (currentView === 'Teams') {
+      return person.name.toLowerCase().includes(searchTerm.toLowerCase());
+    } else if (currentView === 'Positions') {
+      return person.name.toLowerCase().includes(searchTerm.toLowerCase());
+    }
+    return true;
+  });
+  
 
   return (
     <div className={`container mx-auto p-4 bg-gray-200 dark:bg-gray-900 min-h-screen transition-colors duration-300`}>
       <Navbar openModal={openModal} toggleDarkMode={toggleDarkMode} handleViewChange={handleViewChange} />
       <br></br>
+      <SearchBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        searchFilter={searchFilter}
+        setSearchFilter={setSearchFilter}
+        currentView={currentView}
+      />
       {isModalOpen && (
         <Modal isOpen={isModalOpen} title={modalType === 'add' ? 'Add New' : 'Remove'} onClose={closeModal}>
           <ul>
@@ -257,26 +383,29 @@ export default function PeopleTable() {
       <PersonModal
         isOpen={isPersonModalOpen}
         onClose={closePersonModal}
-        onSubmit={handlePersonSubmit}
+        onSubmit={editData ? handleEditPersonSubmit : handlePersonSubmit}
         teams={teams}
         positions={positions}
+        editData={editData}
       />
 
       <PositionModal
         isOpen={isPositionModalOpen}
         onClose={closePositionModal}
-        onSubmit={handlePositionSubmit}
+        onSubmit={editData ? handleEditPositionSubmit : handlePositionSubmit}
+        editData={editData}
       />
 
       <TeamModal
         isOpen={isTeamModalOpen}
         onClose={closeTeamModal}
-        onSubmit={handleTeamSubmit}
+        onSubmit={editData ? handleEditTeamSubmit : handleTeamSubmit}
+        editData={editData}
       />
 
       {currentView === 'People' && (
         <Table
-          data={transformedPeople}
+          data={filteredData}
           handleEdit={handleEdit}
           handleDelete={handleDelete}
           deletingId={deletingId}
@@ -285,7 +414,7 @@ export default function PeopleTable() {
       )}
       {currentView === 'Teams' && (
         <Table
-          data={teams}
+          data={teams.filter(team => team.name.toLowerCase().includes(searchTerm.toLowerCase()))}
           handleEdit={handleEdit}
           handleDelete={handleDelete}
           deletingId={deletingId}
@@ -294,7 +423,7 @@ export default function PeopleTable() {
       )}
       {currentView === 'Positions' && (
         <Table
-          data={positions}
+          data={positions.filter(position => position.name.toLowerCase().includes(searchTerm.toLowerCase()))}
           handleEdit={handleEdit}
           handleDelete={handleDelete}
           deletingId={deletingId}

@@ -1,51 +1,87 @@
-// (components)/TeamModal.js
-import React, { useState } from 'react';
-import Modal from './Modal';
+import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 
-const TeamModal = ({ isOpen, onClose, onSubmit }) => {
-  const [teamName, setTeamName] = useState('');
-  const [message, setMessage] = useState('');
+const TeamModal = ({ isOpen, onClose, onSubmit, editData }) => {
+  const [formData, setFormData] = useState({
+    name: ''
+  });
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        name: editData.name
+      });
+    }
+  }, [editData]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSubmit = () => {
-    if (!teamName) {
-      setMessage('Name is required');
+    const newErrors = {};
+    if (!formData.name) {
+      newErrors.name = 'Name is required';
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       Swal.fire({
-        title: 'Error!',
-        text: 'Name is required',
         icon: 'error',
-        confirmButtonText: 'OK'
+        title: 'Validation Error',
+        text: 'Please correct the errors in the form',
       });
       return;
     }
-    onSubmit(teamName);
-    setTeamName('');
-    setMessage('');
+
+    const teamData = {
+      ...formData,
+      id: editData ? editData.id : undefined // Incluir el id si es una edición
+    };
+    onSubmit(teamData);
+    setFormData({
+      name: ''
+    });
+    setErrors({});
     Swal.fire({
-      title: 'Success!',
-      text: 'Team added successfully',
       icon: 'success',
-      confirmButtonText: 'OK'
+      title: 'Success',
+      text: `Team ${editData ? 'updated' : 'added'} successfully`,
     });
   };
 
   return (
-    <Modal isOpen={isOpen} title="Add Team" onClose={onClose}>
-      <input
-        type="text"
-        value={teamName}
-        onChange={(e) => setTeamName(e.target.value)}
-        placeholder="Name"
-        className="w-full px-4 py-2 mb-4 border rounded dark:bg-gray-700 dark:text-white dark:border-gray-500 dark:placeholder-gray-400"
-      />
-      {message && <p className="mb-4 text-red-500">{message}</p>}
-      <button
-        onClick={handleSubmit}
-        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-      >
-        Submit
-      </button>
-    </Modal>
+    isOpen && (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-96 animate__animated animate__fadeIn">
+          <h2 className="text-xl font-bold mb-4 dark:text-white">{editData ? 'Edit Team' : 'Add Team'}</h2>
+          <div className="relative mb-6">
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Name"
+              className={`w-full px-4 py-2 border rounded dark:bg-gray-700 dark:text-white ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.name && <p className="text-red-500 mt-1">{errors.name}</p>}
+          </div>
+          <button
+            onClick={handleSubmit}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
+          >
+            {editData ? 'Update' : 'Submit'}
+          </button>
+          <button
+            onClick={onClose}
+            className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )
   );
 };
 
