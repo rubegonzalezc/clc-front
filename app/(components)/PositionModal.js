@@ -1,6 +1,7 @@
 // (components)/PositionModal.js
 import React, { useState } from 'react';
 import Modal from './Modal';
+import Swal from 'sweetalert2';
 
 const PositionModal = ({ isOpen, onClose, onSubmit }) => {
   const [positionName, setPositionName] = useState('');
@@ -9,11 +10,23 @@ const PositionModal = ({ isOpen, onClose, onSubmit }) => {
   const handleSubmit = () => {
     if (!positionName) {
       setMessage('Name is required');
+      Swal.fire({
+        title: 'Error!',
+        text: 'Name is required',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
       return;
     }
     onSubmit(positionName);
     setPositionName('');
     setMessage('');
+    Swal.fire({
+      title: 'Success!',
+      text: 'Position added successfully',
+      icon: 'success',
+      confirmButtonText: 'OK'
+    });
   };
 
   return (
