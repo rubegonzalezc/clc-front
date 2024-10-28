@@ -12,6 +12,10 @@ const TeamModal = ({ isOpen, onClose, onSubmit, editData }) => {
       setFormData({
         name: editData.name
       });
+    } else {
+      setFormData({
+        name: ''
+      });
     }
   }, [editData]);
 
@@ -36,7 +40,7 @@ const TeamModal = ({ isOpen, onClose, onSubmit, editData }) => {
     }
 
     const teamData = {
-      ...formData,
+      name: formData.name, // Asegúrate de que el campo name se envíe correctamente
       id: editData ? editData.id : undefined // Incluir el id si es una edición
     };
     onSubmit(teamData);

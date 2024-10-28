@@ -1,6 +1,4 @@
-// page.js
 "use client";
-
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import Navbar from './(components)/Navbar';
@@ -29,6 +27,16 @@ export default function PeopleTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchFilter, setSearchFilter] = useState('RUT');
   const [editData, setEditData] = useState(null);
+  const [personFormData, setPersonFormData] = useState({
+    RUT: '',
+    name: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    teamId: '',
+    positionId: ''
+  });
+  const [loading, setLoading] = useState(true); // Añadir estado de carga
 
   const teamMap = teams ? Object.fromEntries(teams.map(team => [team.id, team.name])) : {};
   const positionMap = positions ? Object.fromEntries(positions.map(position => [position.id, position.name])) : {};
@@ -45,6 +53,12 @@ export default function PeopleTable() {
     console.log('People data with team and position names:', transformedPeople);
   }, [transformedPeople]);
 
+  useEffect(() => {
+    if (people && teams && positions) {
+      setLoading(false); // Cambiar a false una vez que los datos se hayan cargado
+    }
+  }, [people, teams, positions]);
+
   const handleEdit = (id) => {
     const dataToEdit = currentView === 'People'
       ? people.find(person => person.id === id)
@@ -60,6 +74,20 @@ export default function PeopleTable() {
     } else if (currentView === 'Positions') {
       openPositionModal();
     }
+  };
+
+  const handleAddPerson = () => {
+    setEditData(null); // Limpiar el estado de editData
+    setPersonFormData({
+      RUT: '',
+      name: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      teamId: '',
+      positionId: ''
+    }); // Limpiar el estado del formulario
+    openPersonModal(); // Abrir el modal de persona
   };
 
   const handleDelete = (id) => {
@@ -160,18 +188,33 @@ export default function PeopleTable() {
         }
       })
       .catch(error => {
-        setMessage('Error adding person');
-        console.error('Error:', error.message);
+        if (error.message.includes('There is already a person with the same RUT')) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Duplicate RUT',
+            text: 'There is already a person with the same RUT. Please use a different RUT.',
+          });
+        } else {
+          setMessage('Error adding person');
+          console.error('Error:', error.message);
+        }
       });
   };
-
-  const handlePositionSubmit = (positionName) => {
-    fetch('https://localhost:44352/api/Positions', {
+  const handleAddPosition = () => {
+    setEditData(null); // Limpiar el estado de editData
+    openPositionModal(); // Abrir el modal de posición
+  };
+  const handleAddTeam = () => {
+    setEditData(null); // Limpiar el estado de editData
+    openTeamModal(); // Abrir el modal de equipo
+  };
+  const handlePositionSubmit = (positionData) => {
+    return fetch('https://localhost:44352/api/Positions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name: positionName }),
+      body: JSON.stringify(positionData),
     })
       .then(response => {
         if (response.ok) {
@@ -182,23 +225,44 @@ export default function PeopleTable() {
           }, 2000);
         } else {
           return response.text().then(text => {
-            throw new Error(text || response.statusText);
+            try {
+              const errorData = JSON.parse(text);
+              throw new Error(JSON.stringify(errorData));
+            } catch (e) {
+              throw new Error(text);
+            }
           });
         }
       })
       .catch(error => {
-        setMessage('Error adding position');
+        let errorText = 'There was an error adding the position. Please try again.';
+        try {
+          const errorMessage = JSON.parse(error.message);
+          if (errorMessage.errors) {
+            errorText = Object.values(errorMessage.errors).flat().join(' ');
+          } else {
+            errorText = errorMessage.title || errorText;
+          }
+        } catch (e) {
+          errorText = error.message;
+        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: errorText,
+        });
         console.error('Error:', error.message);
+        throw error;
       });
   };
 
-  const handleTeamSubmit = (teamName) => {
+  const handleTeamSubmit = (teamData) => {
     fetch('https://localhost:44352/api/Teams', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name: teamName }),
+      body: JSON.stringify(teamData), // Asegúrate de que el objeto teamData se envíe correctamente
     })
       .then(response => {
         if (response.ok) {
@@ -214,8 +278,22 @@ export default function PeopleTable() {
         }
       })
       .catch(error => {
-        setMessage('Error adding team');
-        console.error('Error:', error.message);
+        if (error.message.includes('The team field is required')) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Validation Error',
+            text: 'The team field is required. Please provide a valid team name.',
+          });
+        } else if (error.message.includes('There is already a team with the same name.')) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Validation Error',
+            text: 'There is already a team with the same name..',
+          });
+        } else {
+          setMessage('Error adding team');
+          console.error('Error:', error.message);
+        }
       });
   };
 
@@ -248,8 +326,7 @@ export default function PeopleTable() {
   };
 
   const handleEditPositionSubmit = (positionData) => {
-    console.log('Updating position data:', positionData); // Añadir este console.log para verificar los datos
-    fetch(`https://localhost:44352/api/Positions/${positionData.id}`, {
+    return fetch(`https://localhost:44352/api/Positions/${positionData.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -264,14 +341,14 @@ export default function PeopleTable() {
             loadPositions(); // Recargar datos después de actualizar una posición
           }, 2000);
         } else {
-          return response.text().then(text => {
-            throw new Error(text || response.statusText);
+          return response.json().then(errorData => {
+            throw new Error(JSON.stringify(errorData));
           });
         }
       })
       .catch(error => {
-        setMessage('Error updating position');
         console.error('Error:', error.message);
+        throw error;
       });
   };
 
@@ -321,14 +398,16 @@ export default function PeopleTable() {
       position: position ? position.name : 'N/A'
     };
   });
+
   useEffect(() => {
     console.log('Mapped people data:', mappedPeople);
   }, [mappedPeople]);
+
   // Filtrar los datos según el término de búsqueda y el filtro seleccionado
   const filteredData = mappedPeople.filter(person => {
     if (currentView === 'People') {
       const value = person[searchFilter];
-      return value ? value.toString().toLowerCase().includes(searchTerm.toLowerCase()) : false;
+      return value ? value.toString().toLowerCase().includes(searchTerm.toLowerCase()) : true;
     } else if (currentView === 'Teams') {
       return person.name.toLowerCase().includes(searchTerm.toLowerCase());
     } else if (currentView === 'Positions') {
@@ -336,7 +415,6 @@ export default function PeopleTable() {
     }
     return true;
   });
-  
 
   return (
     <div className={`container mx-auto p-4 bg-gray-200 dark:bg-gray-900 min-h-screen transition-colors duration-300`}>
@@ -350,34 +428,34 @@ export default function PeopleTable() {
         currentView={currentView}
       />
       {isModalOpen && (
-        <Modal isOpen={isModalOpen} title={modalType === 'add' ? 'Add New' : 'Remove'} onClose={closeModal}>
-          <ul>
-            <li className="mb-2">
-              <button
-                onClick={openPersonModal}
-                className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
-              >
-                Persons
-              </button>
-            </li>
-            <li className="mb-2">
-              <button
-                onClick={openTeamModal}
-                className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
-              >
-                Team
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={openPositionModal}
-                className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
-              >
-                Positions
-              </button>
-            </li>
-          </ul>
-        </Modal>
+        <Modal isOpen={isModalOpen} title={modalType === 'add' ? 'Add New' : 'Add new'} onClose={closeModal}>
+  <ul>
+    <li className="mb-2">
+      <button
+        onClick={handleAddPerson} // Usar la nueva función aquí
+        className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
+      >
+        Persons
+      </button>
+    </li>
+    <li className="mb-2">
+      <button
+        onClick={handleAddTeam}
+        className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
+      >
+        Team
+      </button>
+    </li>
+    <li>
+      <button
+        onClick={handleAddPosition}
+        className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
+      >
+        Positions
+      </button>
+    </li>
+  </ul>
+</Modal>
       )}
 
       <PersonModal
@@ -387,6 +465,8 @@ export default function PeopleTable() {
         teams={teams}
         positions={positions}
         editData={editData}
+        personFormData={personFormData}
+        setPersonFormData={setPersonFormData}
       />
 
       <PositionModal
@@ -403,32 +483,40 @@ export default function PeopleTable() {
         editData={editData}
       />
 
-      {currentView === 'People' && (
-        <Table
-          data={filteredData}
-          handleEdit={handleEdit}
-          handleDelete={handleDelete}
-          deletingId={deletingId}
-          columns={['RUT', 'Name', 'Last Name', 'Email', 'Phone', 'Team', 'Position']}
-        />
-      )}
-      {currentView === 'Teams' && (
-        <Table
-          data={teams.filter(team => team.name.toLowerCase().includes(searchTerm.toLowerCase()))}
-          handleEdit={handleEdit}
-          handleDelete={handleDelete}
-          deletingId={deletingId}
-          columns={['Name']}
-        />
-      )}
-      {currentView === 'Positions' && (
-        <Table
-          data={positions.filter(position => position.name.toLowerCase().includes(searchTerm.toLowerCase()))}
-          handleEdit={handleEdit}
-          handleDelete={handleDelete}
-          deletingId={deletingId}
-          columns={['Name']}
-        />
+      {loading ? ( // Mostrar el spinner de carga mientras loading es true
+        <div className="flex justify-center items-center h-full">
+          <div className="loader"></div>
+        </div>
+      ) : (
+        <>
+          {currentView === 'People' && (
+            <Table
+              data={filteredData}
+              handleEdit={handleEdit}
+              handleDelete={handleDelete}
+              deletingId={deletingId}
+              columns={['RUT', 'Name', 'Last Name', 'Email', 'Phone', 'Team', 'Position']}
+            />
+          )}
+          {currentView === 'Teams' && (
+            <Table
+              data={teams.filter(team => team.name.toLowerCase().includes(searchTerm.toLowerCase()))}
+              handleEdit={handleEdit}
+              handleDelete={handleDelete}
+              deletingId={deletingId}
+              columns={['Name']}
+            />
+          )}
+          {currentView === 'Positions' && (
+            <Table
+              data={positions.filter(position => position.name.toLowerCase().includes(searchTerm.toLowerCase()))}
+              handleEdit={handleEdit}
+              handleDelete={handleDelete}
+              deletingId={deletingId}
+              columns={['Name']}
+            />
+          )}
+        </>
       )}
     </div>
   );

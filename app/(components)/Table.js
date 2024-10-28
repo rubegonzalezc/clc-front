@@ -1,3 +1,5 @@
+import React from 'react';
+
 const Table = ({ data, handleEdit, handleDelete, deletingId, columns }) => {
   const columnKeyMap = {
     "RUT": "rut",

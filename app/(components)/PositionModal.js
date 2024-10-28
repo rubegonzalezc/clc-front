@@ -12,6 +12,10 @@ const PositionModal = ({ isOpen, onClose, onSubmit, editData }) => {
       setFormData({
         name: editData.name
       });
+    } else {
+      setFormData({
+        name: ''
+      });
     }
   }, [editData]);
 
@@ -39,16 +43,32 @@ const PositionModal = ({ isOpen, onClose, onSubmit, editData }) => {
       ...formData,
       id: editData ? editData.id : undefined // Incluir el id si es una edición
     };
-    onSubmit(positionData);
-    setFormData({
-      name: ''
-    });
-    setErrors({});
-    Swal.fire({
-      icon: 'success',
-      title: 'Success',
-      text: `Position ${editData ? 'updated' : 'added'} successfully`,
-    });
+
+    onSubmit(positionData)
+      .then(() => {
+        setFormData({
+          name: ''
+        });
+        setErrors({});
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: `Position ${editData ? 'updated' : 'added'} successfully`,
+        });
+        onClose();
+      })
+      .catch(error => {
+        const errorMessage = JSON.parse(error.message);
+        let errorText = 'There was an error adding the position. Please try again.';
+        if (errorMessage.errors) {
+          errorText = Object.values(errorMessage.errors).flat().join(' ');
+        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: errorText,
+        });
+      });
   };
 
   return (
