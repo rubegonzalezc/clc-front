@@ -20,17 +20,17 @@ const Table = ({ data, handleEdit, handleDelete, deletingId, columns }) => {
       <thead className="bg-gray-300 border dark:bg-gray-700">
         <tr>
           {columns.map((column) => (
-            <th key={column} className="py-2 px-4 border-b dark:border-gray-600 dark:text-white">
+            <th key={column} className="py-2 px-4 border-b dark:border-gray-600 text-black dark:text-white">
               {column}
             </th>
           ))}
-          <th className="py-2 px-4 border-b dark:border-gray-600 dark:text-white">Actions</th>
+          <th className="py-2 px-4 border-b dark:border-gray-600 text-black dark:text-white">Actions</th>
         </tr>
       </thead>
       <tbody>
         {data.length === 0 ? (
           <tr>
-            <td colSpan={columns.length + 1} className="py-2 px-4 border-b dark:border-gray-600 dark:text-white text-center">
+            <td colSpan={columns.length + 1} className="py-2 px-4 border-b dark:border-gray-600 text-black dark:text-white text-center">
               No data available
             </td>
           </tr>
@@ -41,7 +41,7 @@ const Table = ({ data, handleEdit, handleDelete, deletingId, columns }) => {
               className={`hover:bg-gray-200 dark:hover:bg-gray-600 transition-opacity duration-500 ${deletingId === item.id ? 'opacity-0' : 'opacity-100'}`}
             >
               {columns.map((column) => (
-                <td key={column} className="py-2 px-4 border-b dark:border-gray-600 dark:text-white">
+                <td key={column} className="py-2 px-4 border-b dark:border-gray-600 text-black dark:text-white">
                   {item[normalizeColumnName(column)]}
                 </td>
               ))}

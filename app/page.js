@@ -32,7 +32,7 @@ export default function PeopleTable() {
   const { data: teams, loadData: loadTeams } = useData('https://localhost:44352/api/Teams');
   const { data: positions, loadData: loadPositions } = useData('https://localhost:44352/api/Positions');
   const [deletingId, setDeletingId] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const { isOpen: isModalOpen, openModal, closeModal } = useModal();
   const { isOpen: isPositionModalOpen, openModal: openPositionModal, closeModal: closePositionModal } = useModal();
   const { isOpen: isTeamModalOpen, openModal: openTeamModal, closeModal: closeTeamModal } = useModal();
@@ -44,6 +44,7 @@ export default function PeopleTable() {
   const [searchFilter, setSearchFilter] = useState('rut');
   const [editData, setEditData] = useState(null);
   const [personFormData, setPersonFormData] = useState({
+  
     RUT: '',
     name: '',
     lastName: '',
@@ -52,6 +53,7 @@ export default function PeopleTable() {
     teamId: '',
     positionId: ''
   });
+  
   const [loading, setLoading] = useState(true); // Añadir estado de carga
 
   const teamMap = teams ? Object.fromEntries(teams.map(team => [team.id, team.name])) : {};
@@ -192,11 +194,15 @@ export default function PeopleTable() {
     })
       .then(response => {
         if (response.ok) {
-          setMessage('Person added successfully');
           setTimeout(() => {
             closePersonModal();
             loadPeople(); // Recargar datos después de añadir una persona
           }, 2000);
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Person added successfully',
+          });
         } else {
           return response.text().then(text => {
             throw new Error(text || response.statusText);
@@ -213,6 +219,11 @@ export default function PeopleTable() {
         } else {
           setMessage('Error adding person');
           console.error('Error:', error.message);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'There was an error adding the person. Please try again.',
+          });
         }
       });
   };
@@ -239,6 +250,11 @@ export default function PeopleTable() {
             closePositionModal();
             loadPositions(); // Recargar datos después de añadir una posición
           }, 2000);
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Position added successfully',
+          });
         } else {
           return response.text().then(text => {
             try {
@@ -267,55 +283,59 @@ export default function PeopleTable() {
           title: 'Error',
           text: errorText,
         });
-        throw error;
       });
   };
 
-  const handleTeamSubmit = (teamData) => {
-    fetch('https://localhost:44352/api/Teams', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(teamData), // Asegúrate de que el objeto teamData se envíe correctamente
-    })
-      .then(response => {
-        if (response.ok) {
-          setMessage('Team added successfully');  
-          setTimeout(() => {
-            closeTeamModal();
-            loadTeams(); // Recargar datos después de añadir un equipo
-          }, 2000);
-        } else {
-          return response.text().then(text => {
-            try {
-              const errorData = JSON.parse(text);
-              throw new Error(JSON.stringify(errorData));
-            } catch (e) {
-              throw new Error(text);
-            }
-          });
-        }
-      })
-      .catch(error => {
-        let errorText = 'There was an error adding the team. Please try again.';
-        try {
-          const errorMessage = JSON.parse(error.message);
-          if (errorMessage.errors) {
-            errorText = Object.values(errorMessage.errors).flat().join(' ');
-          } else {
-            errorText = errorMessage.title || errorText;
-          }
-        } catch (e) {
-          errorText = error.message;
-        }
+const handleTeamSubmit = (teamData) => {
+  fetch('https://localhost:44352/api/Teams', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(teamData), // Asegúrate de que el objeto teamData se envíe correctamente
+  })
+    .then(response => {
+      if (response.ok) {
+        setMessage('Team added successfully');  
+        setTimeout(() => {
+          closeTeamModal();
+          loadTeams(); // Recargar datos después de añadir un equipo
+        }, 2000);
         Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: errorText,
+          icon: 'success',
+          title: 'Success',
+          text: 'Team added successfully',
         });
+      } else {
+        return response.text().then(text => {
+          try {
+            const errorData = JSON.parse(text);
+            throw new Error(JSON.stringify(errorData));
+          } catch (e) {
+            throw new Error(text);
+          }
+        });
+      }
+    })
+    .catch(error => {
+      let errorText = 'There was an error adding the team. Please try again.';
+      try {
+        const errorMessage = JSON.parse(error.message);
+        if (errorMessage.errors) {
+          errorText = Object.values(errorMessage.errors).flat().join(' ');
+        } else {
+          errorText = errorMessage.title || errorText;
+        }
+      } catch (e) {
+        errorText = error.message;
+      }
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: errorText,
       });
-  };
+    });
+};
 
   const handleEditPersonSubmit = (personData) => {
     console.log('Updating person data:', personData); // Añadir este console.log para verificar los datos
@@ -424,18 +444,39 @@ export default function PeopleTable() {
   }, [mappedPeople]);
 
   // Filtrar los datos según el término de búsqueda y el filtro seleccionado
-  const filteredData = mappedPeople.filter(person => {
-    if (currentView === 'People') {
-      const value = person[searchFilter];
-      return value ? value.toString().toLowerCase().includes(searchTerm.toLowerCase()) : true;
-    } else if (currentView === 'Teams') {
-      return person.name.toLowerCase().includes(searchTerm.toLowerCase());
-    } else if (currentView === 'Positions') {
-      return person.name.toLowerCase().includes(searchTerm.toLowerCase());
-    }
-    return true;
-  });
+// Filtrar los datos según el término de búsqueda y el filtro seleccionado
+const filteredData = mappedPeople.filter(person => {
+  if (currentView === 'People') {
+    const value = person[searchFilter];
+    return value ? value.toString().toLowerCase().includes(searchTerm.toLowerCase()) : true;
+  } else if (currentView === 'Teams') {
+    return person.name.toLowerCase().includes(searchTerm.toLowerCase());
+  } else if (currentView === 'Positions') {
+    return person.name.toLowerCase().includes(searchTerm.toLowerCase());
+  }
+  return true;
+});
 
+// Añadir estados para la paginación y el número de elementos por página
+const [currentPage, setCurrentPage] = useState(1);
+const [itemsPerPage, setItemsPerPage] = useState(10);
+
+// Calcular los datos a mostrar en la página actual
+const indexOfLastItem = currentPage * itemsPerPage;
+const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+
+// Calcular el número total de páginas
+const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+// Función para cambiar de página
+const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+// Función para cambiar el número de elementos por página
+const handleItemsPerPageChange = (event) => {
+  setItemsPerPage(Number(event.target.value));
+  setCurrentPage(1); // Resetear a la primera página cuando se cambia el número de elementos por página
+};
   return (
     <div className={`container mx-auto p-4 bg-gray-200 dark:bg-gray-900 min-h-screen transition-colors duration-300`}>
       <Navbar openModal={openModal} toggleDarkMode={toggleDarkMode} handleViewChange={handleViewChange} />
@@ -502,16 +543,32 @@ export default function PeopleTable() {
         onSubmit={editData ? handleEditTeamSubmit : handleTeamSubmit}
         editData={editData}
       />
-
+            <div>
+        <label htmlFor="itemsPerPage" className="mr-2 text-black dark:text-white">Items per page:</label>
+        <select
+          id="itemsPerPage"
+          value={itemsPerPage}
+          onChange={handleItemsPerPageChange}
+          className="bg-gray-300 dark:bg-gray-700 text-black dark:text-white rounded"
+        >
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={15}>15</option>
+        </select>
+      </div>
+      <div className="text-black dark:text-white">
+        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredData.length)} of {filteredData.length} entries
+      </div>
       {loading ? ( // Mostrar el spinner de carga mientras loading es true
         <div className="flex justify-center items-center h-full">
           <div className="loader"></div>
         </div>
+        
       ) : (
         <>
           {currentView === 'People' && (
             <Table
-              data={filteredData}
+              data={currentItems}
               handleEdit={handleEdit}
               handleDelete={handleDelete}
               deletingId={deletingId}
@@ -520,7 +577,7 @@ export default function PeopleTable() {
           )}
           {currentView === 'Teams' && (
             <Table
-              data={teams.filter(team => team.name.toLowerCase().includes(searchTerm.toLowerCase()))}
+              data={currentItems}
               handleEdit={handleEdit}
               handleDelete={handleDelete}
               deletingId={deletingId}
@@ -529,7 +586,7 @@ export default function PeopleTable() {
           )}
           {currentView === 'Positions' && (
             <Table
-              data={positions.filter(position => position.name.toLowerCase().includes(searchTerm.toLowerCase()))}
+              data={currentItems}
               handleEdit={handleEdit}
               handleDelete={handleDelete}
               deletingId={deletingId}
@@ -537,7 +594,19 @@ export default function PeopleTable() {
             />
           )}
         </>
+        
       )}
+          <div className="flex justify-center mt-4">
+      {Array.from({ length: totalPages }, (_, index) => (
+        <button
+          key={index + 1}
+          onClick={() => paginate(index + 1)}
+          className={`mx-1 px-3 py-1 rounded ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-300 dark:bg-gray-700 text-black dark:text-white'}`}
+        >
+          {index + 1}
+        </button>
+      ))}
+    </div>
     </div>
   );
 }
