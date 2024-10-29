@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
+import 'animate.css';
 
 const validateRut = (rut) => {
   const cleanRut = rut.replace(/[^0-9kK]/g, '').toUpperCase();
@@ -42,6 +43,8 @@ const PersonModal = ({ isOpen, onClose, onSubmit, teams, positions, editData }) 
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
+  const [isClosing, setIsClosing] = useState(false);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -70,6 +73,19 @@ const PersonModal = ({ isOpen, onClose, onSubmit, teams, positions, editData }) 
       setTimeout(() => setLoading(false), 500); // Simulate loading delay
     }
   }, [isOpen, editData]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        handleClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -136,6 +152,14 @@ const PersonModal = ({ isOpen, onClose, onSubmit, teams, positions, editData }) 
     });
   };
 
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 500); // Duration of the closing animation
+  };
+
   return (
     isOpen && (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -144,7 +168,7 @@ const PersonModal = ({ isOpen, onClose, onSubmit, teams, positions, editData }) 
             <div className="loader"></div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-96 animate__animated animate__fadeIn">
+          <div ref={modalRef} className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-96 animate__animated ${isClosing ? 'animate__fadeOut' : 'animate__fadeIn'}`}>
             <h2 className="text-xl font-bold mb-4 dark:text-white">{editData ? 'Edit Person' : 'Add Person'}</h2>
             <div className="relative mb-6">
               <input
@@ -240,7 +264,7 @@ const PersonModal = ({ isOpen, onClose, onSubmit, teams, positions, editData }) 
               {editData ? 'Update' : 'Submit'}
             </button>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
             >
               Close

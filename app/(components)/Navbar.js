@@ -1,12 +1,25 @@
-// (components)/Navbar.js
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Navbar({ openModal, toggleDarkMode, handleViewChange }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
+
+  const handleClickOutside = (event) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setIsDropdownOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="bg-gray-100 dark:bg-gray-600 p-4">
@@ -16,7 +29,7 @@ export default function Navbar({ openModal, toggleDarkMode, handleViewChange }) 
           <div className="text-gray-800 dark:text-white text-xl font-bold">People Management</div>
         </div>
         <div className="flex space-x-4">
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button
               onClick={toggleDropdown}
               className="text-gray-800 dark:text-white px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none"

@@ -12,6 +12,22 @@ import useData from './(hooks)/useData';
 import useModal from './(hooks)/useModal';
 
 export default function PeopleTable() {
+  useEffect(() => {
+    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      setDarkMode(e.matches);
+    };
+  
+    // Set initial mode based on system preference
+    setDarkMode(darkModeMediaQuery.matches);
+  
+    // Add event listener for changes in system preference
+    darkModeMediaQuery.addEventListener('change', handleChange);
+  
+    return () => {
+      darkModeMediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
   const { data: people, loadData: loadPeople } = useData('https://localhost:44352/api/People');
   const { data: teams, loadData: loadTeams } = useData('https://localhost:44352/api/Teams');
   const { data: positions, loadData: loadPositions } = useData('https://localhost:44352/api/Positions');
@@ -251,7 +267,6 @@ export default function PeopleTable() {
           title: 'Error',
           text: errorText,
         });
-        console.error('Error:', error.message);
         throw error;
       });
   };
@@ -266,34 +281,39 @@ export default function PeopleTable() {
     })
       .then(response => {
         if (response.ok) {
-          setMessage('Team added successfully');
+          setMessage('Team added successfully');  
           setTimeout(() => {
             closeTeamModal();
             loadTeams(); // Recargar datos después de añadir un equipo
           }, 2000);
         } else {
           return response.text().then(text => {
-            throw new Error(text || response.statusText);
+            try {
+              const errorData = JSON.parse(text);
+              throw new Error(JSON.stringify(errorData));
+            } catch (e) {
+              throw new Error(text);
+            }
           });
         }
       })
       .catch(error => {
-        if (error.message.includes('The team field is required')) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Validation Error',
-            text: 'The team field is required. Please provide a valid team name.',
-          });
-        } else if (error.message.includes('There is already a team with the same name.')) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Validation Error',
-            text: 'There is already a team with the same name..',
-          });
-        } else {
-          setMessage('Error adding team');
-          console.error('Error:', error.message);
+        let errorText = 'There was an error adding the team. Please try again.';
+        try {
+          const errorMessage = JSON.parse(error.message);
+          if (errorMessage.errors) {
+            errorText = Object.values(errorMessage.errors).flat().join(' ');
+          } else {
+            errorText = errorMessage.title || errorText;
+          }
+        } catch (e) {
+          errorText = error.message;
         }
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: errorText,
+        });
       });
   };
 
