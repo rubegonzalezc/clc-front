@@ -24,6 +24,11 @@ const TeamModal = ({ isOpen, onClose, onSubmit, editData }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Verificar si el clic se realiza en el SweetAlert
+      if (Swal.isVisible() && Swal.getPopup().contains(event.target)) {
+        return;
+      }
+
       if (modalRef.current && !modalRef.current.contains(event.target)) {
         handleClose();
       }
@@ -51,6 +56,9 @@ const TeamModal = ({ isOpen, onClose, onSubmit, editData }) => {
         icon: 'error',
         title: 'Validation Error',
         text: 'Please correct the errors in the form',
+        didClose: () => {
+          // No hacer nada cuando se cierra el SweetAlert
+        }
       });
       return;
     }
@@ -68,6 +76,8 @@ const TeamModal = ({ isOpen, onClose, onSubmit, editData }) => {
       icon: 'success',
       title: 'Success',
       text: `Team ${editData ? 'updated' : 'added'} successfully`,
+    }).then(() => {
+      onClose(); // Cerrar el modal solo después de mostrar el mensaje de éxito
     });
   };
 
