@@ -41,7 +41,7 @@ export default function PeopleTable() {
   const [message, setMessage] = useState('');
   const [currentView, setCurrentView] = useState('People'); // Estado para la vista actual
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchFilter, setSearchFilter] = useState('RUT');
+  const [searchFilter, setSearchFilter] = useState('rut');
   const [editData, setEditData] = useState(null);
   const [personFormData, setPersonFormData] = useState({
     RUT: '',
