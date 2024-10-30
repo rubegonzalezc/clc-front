@@ -10,7 +10,7 @@ import Table from './(components)/Table';
 import SearchBar from './(components)/Searchbar'; // Importar el componente SearchBar
 import useData from './(hooks)/useData';
 import useModal from './(hooks)/useModal';
-
+import * as XLSX from 'xlsx';
 export default function PeopleTable() {
   useEffect(() => {
     const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -53,7 +53,39 @@ export default function PeopleTable() {
     teamId: '',
     positionId: ''
   });
+
+  const exportToExcel = () => {
+    let dataToExport = [];
+    let sheetName = '';
   
+    if (currentView === 'People') {
+      dataToExport = filteredData.map(person => ({
+        RUT: person.rut,
+        Name: person.name,
+        'Last Name': person.lastName,
+        Email: person.email,
+        Phone: person.phone,
+        Team: person.team,
+        Position: person.position
+      }));
+      sheetName = 'People';
+    } else if (currentView === 'Teams') {
+      dataToExport = filteredData.map(team => ({
+        Name: team.name
+      }));
+      sheetName = 'Teams';
+    } else if (currentView === 'Positions') {
+      dataToExport = filteredData.map(position => ({
+        Name: position.name
+      }));
+      sheetName = 'Positions';
+    }
+  
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    XLSX.writeFile(workbook, `${sheetName}.xlsx`);
+  };
   const [loading, setLoading] = useState(true); // Añadir estado de carga
 
   const teamMap = teams ? Object.fromEntries(teams.map(team => [team.id, team.name])) : {};
@@ -445,16 +477,13 @@ const handleTeamSubmit = (teamData) => {
 
   // Filtrar los datos según el término de búsqueda y el filtro seleccionado
 // Filtrar los datos según el término de búsqueda y el filtro seleccionado
-const filteredData = mappedPeople.filter(person => {
-  if (currentView === 'People') {
-    const value = person[searchFilter];
-    return value ? value.toString().toLowerCase().includes(searchTerm.toLowerCase()) : true;
-  } else if (currentView === 'Teams') {
-    return person.name.toLowerCase().includes(searchTerm.toLowerCase());
-  } else if (currentView === 'Positions') {
-    return person.name.toLowerCase().includes(searchTerm.toLowerCase());
-  }
-  return true;
+const filteredData = currentView === 'People' ? mappedPeople.filter(person => {
+  const value = person[searchFilter];
+  return value ? value.toString().toLowerCase().includes(searchTerm.toLowerCase()) : true;
+}) : currentView === 'Teams' ? teams.filter(team => {
+  return team.name.toLowerCase().includes(searchTerm.toLowerCase());
+}) : positions.filter(position => {
+  return position.name.toLowerCase().includes(searchTerm.toLowerCase());
 });
 
 // Añadir estados para la paginación y el número de elementos por página
@@ -606,6 +635,14 @@ const handleItemsPerPageChange = (event) => {
           {index + 1}
         </button>
       ))}
+      <div className="flex justify-end">
+  <button
+    onClick={exportToExcel}
+    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+  >
+    Export to Excel
+  </button>
+</div>
     </div>
     </div>
   );
