@@ -13,9 +13,9 @@ export default function usePeopleTable() {
   const { isOpen: isPositionModalOpen, openModal: openPositionModal, closeModal: closePositionModal } = useModal();
   const { isOpen: isTeamModalOpen, openModal: openTeamModal, closeModal: closeTeamModal } = useModal();
   const { isOpen: isPersonModalOpen, openModal: openPersonModal, closeModal: closePersonModal } = useModal();
-  const [modalType, setModalType] = useState(''); // 'add' or 'remove'
+  const [modalType, setModalType] = useState(''); 
   const [message, setMessage] = useState('');
-  const [currentView, setCurrentView] = useState('People'); // Estado para la vista actual
+  const [currentView, setCurrentView] = useState('People'); 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchFilter, setSearchFilter] = useState('RUT');
   const [editData, setEditData] = useState(null);
@@ -28,7 +28,7 @@ export default function usePeopleTable() {
     teamId: '',
     positionId: ''
   });
-  const [loading, setLoading] = useState(true); // Añadir estado de carga
+  const [loading, setLoading] = useState(true); 
 
   const teamMap = teams ? Object.fromEntries(teams.map(team => [team.id, team.name])) : {};
   const positionMap = positions ? Object.fromEntries(positions.map(position => [position.id, position.name])) : {};
@@ -47,7 +47,7 @@ export default function usePeopleTable() {
 
   useEffect(() => {
     if (people && teams && positions) {
-      setLoading(false); // Cambiar a false una vez que los datos se hayan cargado
+      setLoading(false); 
     }
   }, [people, teams, positions]);
 
@@ -69,7 +69,7 @@ export default function usePeopleTable() {
   };
 
   const handleAddPerson = () => {
-    setEditData(null); // Limpiar el estado de editData
+    setEditData(null); 
     setPersonFormData({
       RUT: '',
       name: '',
@@ -78,8 +78,8 @@ export default function usePeopleTable() {
       phone: '',
       teamId: '',
       positionId: ''
-    }); // Limpiar el estado del formulario
-    openPersonModal(); // Abrir el modal de persona
+    });
+    openPersonModal(); 
   };
 
   const handleDelete = (id) => {
@@ -158,7 +158,7 @@ export default function usePeopleTable() {
   }, [darkMode]);
 
   const handlePersonSubmit = (personData) => {
-    console.log('Submitting person data:', personData); // Añadir este console.log para verificar los datos
+    console.log('Submitting person data:', personData); 
     fetch('https://localhost:44352/api/People', {
       method: 'POST',
       headers: {
@@ -171,7 +171,7 @@ export default function usePeopleTable() {
           setMessage('Person added successfully');
           setTimeout(() => {
             closePersonModal();
-            loadPeople(); // Recargar datos después de añadir una persona
+            loadPeople(); 
           }, 2000);
         } else {
           return response.text().then(text => {
@@ -193,12 +193,12 @@ export default function usePeopleTable() {
       });
   };
   const handleAddPosition = () => {
-    setEditData(null); // Limpiar el estado de editData
-    openPositionModal(); // Abrir el modal de posición
+    setEditData(null); 
+    openPositionModal();
   };
   const handleAddTeam = () => {
-    setEditData(null); // Limpiar el estado de editData
-    openTeamModal(); // Abrir el modal de equipo
+    setEditData(null); 
+    openTeamModal(); 
   };
   const handlePositionSubmit = (positionData) => {
     return fetch('https://localhost:44352/api/Positions', {
@@ -213,7 +213,7 @@ export default function usePeopleTable() {
           setMessage('Position added successfully');
           setTimeout(() => {
             closePositionModal();
-            loadPositions(); // Recargar datos después de añadir una posición
+            loadPositions(); 
           }, 2000);
         } else {
           return response.text().then(text => {
@@ -253,14 +253,14 @@ export default function usePeopleTable() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(teamData), // Asegúrate de que el objeto teamData se envíe correctamente
+      body: JSON.stringify(teamData), 
     })
       .then(response => {
         if (response.ok) {
           setMessage('Team added successfully');  
           setTimeout(() => {
             closeTeamModal();
-            loadTeams(); // Recargar datos después de añadir un equipo
+            loadTeams(); 
           }, 2000);
         } else {
           return response.text().then(text => {
@@ -294,7 +294,6 @@ export default function usePeopleTable() {
   };
 
   const handleEditPersonSubmit = (personData) => {
-    console.log('Updating person data:', personData); // Añadir este console.log para verificar los datos
     fetch(`https://localhost:44352/api/People/${personData.id}`, {
       method: 'PUT',
       headers: {
@@ -307,7 +306,7 @@ export default function usePeopleTable() {
           setMessage('Person updated successfully');
           setTimeout(() => {
             closePersonModal();
-            loadPeople(); // Recargar datos después de actualizar una persona
+            loadPeople(); 
           }, 2000);
         } else {
           return response.text().then(text => {
@@ -334,7 +333,7 @@ export default function usePeopleTable() {
           setMessage('Position updated successfully');
           setTimeout(() => {
             closePositionModal();
-            loadPositions(); // Recargar datos después de actualizar una posición
+            loadPositions(); 
           }, 2000);
         } else {
           return response.json().then(errorData => {
@@ -349,7 +348,6 @@ export default function usePeopleTable() {
   };
 
   const handleEditTeamSubmit = (teamData) => {
-    console.log('Updating team data:', teamData); // Añadir este console.log para verificar los datos
     fetch(`https://localhost:44352/api/Teams/${teamData.id}`, {
       method: 'PUT',
       headers: {
@@ -362,7 +360,7 @@ export default function usePeopleTable() {
           setMessage('Team updated successfully');
           setTimeout(() => {
             closeTeamModal();
-            loadTeams(); // Recargar datos después de actualizar un equipo
+            loadTeams(); 
           }, 2000);
         } else {
           return response.text().then(text => {
@@ -384,7 +382,6 @@ export default function usePeopleTable() {
     console.log('People data:', people);
   }, [people]);
 
-  // Mapea los datos de people para incluir los nombres de team y position
   const mappedPeople = people.map(person => {
     const team = teams.find(team => team.id === person.teamId);
     const position = positions.find(position => position.id === person.positionId);
@@ -399,7 +396,6 @@ export default function usePeopleTable() {
     console.log('Mapped people data:', mappedPeople);
   }, [mappedPeople]);
 
-  // Filtrar los datos según el término de búsqueda y el filtro seleccionado
   const filteredData = mappedPeople.filter(person => {
     if (currentView === 'People') {
       const value = person[searchFilter];

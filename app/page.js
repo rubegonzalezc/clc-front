@@ -7,7 +7,7 @@ import TeamModal from './(components)/TeamModal';
 import PersonModal from './(components)/PersonModal';
 import Modal from './(components)/Modal';
 import Table from './(components)/Table';
-import SearchBar from './(components)/Searchbar'; // Importar el componente SearchBar
+import SearchBar from './(components)/Searchbar'; 
 import useData from './(hooks)/useData';
 import useModal from './(hooks)/useModal';
 import * as XLSX from 'xlsx';
@@ -17,11 +17,9 @@ export default function PeopleTable() {
     const handleChange = (e) => {
       setDarkMode(e.matches);
     };
-  
-    // Set initial mode based on system preference
+
     setDarkMode(darkModeMediaQuery.matches);
   
-    // Add event listener for changes in system preference
     darkModeMediaQuery.addEventListener('change', handleChange);
   
     return () => {
@@ -37,9 +35,9 @@ export default function PeopleTable() {
   const { isOpen: isPositionModalOpen, openModal: openPositionModal, closeModal: closePositionModal } = useModal();
   const { isOpen: isTeamModalOpen, openModal: openTeamModal, closeModal: closeTeamModal } = useModal();
   const { isOpen: isPersonModalOpen, openModal: openPersonModal, closeModal: closePersonModal } = useModal();
-  const [modalType, setModalType] = useState(''); // 'add' or 'remove'
+  const [modalType, setModalType] = useState(''); 
   const [message, setMessage] = useState('');
-  const [currentView, setCurrentView] = useState('People'); // Estado para la vista actual
+  const [currentView, setCurrentView] = useState('People'); 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchFilter, setSearchFilter] = useState('rut');
   const [editData, setEditData] = useState(null);
@@ -86,7 +84,7 @@ export default function PeopleTable() {
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     XLSX.writeFile(workbook, `${sheetName}.xlsx`);
   };
-  const [loading, setLoading] = useState(true); // Añadir estado de carga
+  const [loading, setLoading] = useState(true); 
 
   const teamMap = teams ? Object.fromEntries(teams.map(team => [team.id, team.name])) : {};
   const positionMap = positions ? Object.fromEntries(positions.map(position => [position.id, position.name])) : {};
@@ -105,7 +103,7 @@ export default function PeopleTable() {
 
   useEffect(() => {
     if (people && teams && positions) {
-      setLoading(false); // Cambiar a false una vez que los datos se hayan cargado
+      setLoading(false); 
     }
   }, [people, teams, positions]);
 
@@ -127,7 +125,7 @@ export default function PeopleTable() {
   };
 
   const handleAddPerson = () => {
-    setEditData(null); // Limpiar el estado de editData
+    setEditData(null); 
     setPersonFormData({
       RUT: '',
       name: '',
@@ -136,8 +134,8 @@ export default function PeopleTable() {
       phone: '',
       teamId: '',
       positionId: ''
-    }); // Limpiar el estado del formulario
-    openPersonModal(); // Abrir el modal de persona
+    });
+    openPersonModal(); 
   };
 
   const handleDelete = (id) => {
@@ -227,7 +225,7 @@ export default function PeopleTable() {
         if (response.ok) {
           setTimeout(() => {
             closePersonModal();
-            loadPeople(); // Recargar datos después de añadir una persona
+            loadPeople(); 
           }, 2000);
           Swal.fire({
             icon: 'success',
@@ -274,11 +272,11 @@ export default function PeopleTable() {
   };
   const handleAddPosition = () => {
     setEditData(null); 
-    openPositionModal(); // Abrir el modal de posición
+    openPositionModal(); 
   };
   const handleAddTeam = () => {
-    setEditData(null); // Limpiar el estado de editData
-    openTeamModal(); // Abrir el modal de equipo
+    setEditData(null); 
+    openTeamModal(); 
   };
   const handlePositionSubmit = (positionData) => {
     return fetch('https://localhost:44352/api/Positions', {
@@ -293,7 +291,7 @@ export default function PeopleTable() {
           setMessage('Position added successfully');
           setTimeout(() => {
             closePositionModal();
-            loadPositions(); // Recargar datos después de añadir una posición
+            loadPositions(); 
           }, 2000);
           Swal.fire({
             icon: 'success',
@@ -313,77 +311,88 @@ export default function PeopleTable() {
       })
       .catch(error => {
         let errorText = 'There was an error adding the position. Please try again.';
-        try {
-          const errorMessage = JSON.parse(error.message);
-          if (errorMessage.errors) {
-            errorText = Object.values(errorMessage.errors).flat().join(' ');
-          } else {
-            errorText = errorMessage.title || errorText;
+        if (error.message === 'Failed to fetch') {
+          errorText = 'No connection with the API. Please check your network connection.';
+        } else {
+          try {
+            const errorMessage = JSON.parse(error.message);
+            if (errorMessage.errors) {
+              errorText = Object.values(errorMessage.errors).flat().join(' ');
+            } else {
+              errorText = errorMessage.title || errorText;
+            }
+          } catch (e) {
+            errorText = error.message;
           }
-        } catch (e) {
-          errorText = error.message;
         }
         Swal.fire({
           icon: 'error',
           title: 'Error',
           text: errorText,
         });
+        console.error('Error:', error.message);
+        throw error;
       });
   };
 
-const handleTeamSubmit = (teamData) => {
-  fetch('https://localhost:44352/api/Teams', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(teamData), // Asegúrate de que el objeto teamData se envíe correctamente
-  })
-    .then(response => {
-      if (response.ok) {
-        setMessage('Team added successfully');  
-        setTimeout(() => {
-          closeTeamModal();
-          loadTeams(); // Recargar datos después de añadir un equipo
-        }, 2000);
-        Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: 'Team added successfully',
-        });
-      } else {
-        return response.text().then(text => {
-          try {
-            const errorData = JSON.parse(text);
-            throw new Error(JSON.stringify(errorData));
-          } catch (e) {
-            throw new Error(text);
-          }
-        });
-      }
+  const handleTeamSubmit = (teamData) => {
+    return fetch('https://localhost:44352/api/Teams', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(teamData),
     })
-    .catch(error => {
-      let errorText = 'There was an error adding the team. Please try again.';
-      try {
-        const errorMessage = JSON.parse(error.message);
-        if (errorMessage.errors) {
-          errorText = Object.values(errorMessage.errors).flat().join(' ');
+      .then(response => {
+        if (response.ok) {
+          setMessage('Team added successfully');
+          setTimeout(() => {
+            closePositionModal();
+            loadPositions(); 
+          }, 2000);
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Team added successfully',
+          });
         } else {
-          errorText = errorMessage.title || errorText;
+          return response.text().then(text => {
+            try {
+              const errorData = JSON.parse(text);
+              throw new Error(JSON.stringify(errorData));
+            } catch (e) {
+              throw new Error(text);
+            }
+          });
         }
-      } catch (e) {
-        errorText = error.message;
-      }
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: errorText,
+      })
+      .catch(error => {
+        let errorText = 'There was an error adding the Team. Please try again.';
+        if (error.message === 'Failed to fetch') {
+          errorText = 'No connection with the API. Please check your network connection.';
+        } else {
+          try {
+            const errorMessage = JSON.parse(error.message);
+            if (errorMessage.errors) {
+              errorText = Object.values(errorMessage.errors).flat().join(' ');
+            } else {
+              errorText = errorMessage.title || errorText;
+            }
+          } catch (e) {
+            errorText = error.message;
+          }
+        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: errorText,
+        });
+        console.error('Error:', error.message);
+        throw error;
       });
-    });
-};
-
+  };
   const handleEditPersonSubmit = (personData) => {
-    console.log('Updating person data:', personData); // Añadir este console.log para verificar los datos
+    console.log('Updating person data:', personData);
     fetch(`https://localhost:44352/api/People/${personData.id}`, {
       method: 'PUT',
       headers: {
@@ -396,7 +405,7 @@ const handleTeamSubmit = (teamData) => {
           setMessage('Person updated successfully');
           setTimeout(() => {
             closePersonModal();
-            loadPeople(); // Recargar datos después de actualizar una persona
+            loadPeople(); 
           }, 2000);
         } else {
           return response.text().then(text => {
@@ -505,16 +514,13 @@ const indexOfLastItem = currentPage * itemsPerPage;
 const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
-// Calcular el número total de páginas
 const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-// Función para cambiar de página
 const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-// Función para cambiar el número de elementos por página
 const handleItemsPerPageChange = (event) => {
   setItemsPerPage(Number(event.target.value));
-  setCurrentPage(1); // Resetear a la primera página cuando se cambia el número de elementos por página
+  setCurrentPage(1); 
 };
   return (
     <div className={`container mx-auto p-4 bg-gray-200 dark:bg-gray-900 min-h-screen transition-colors duration-300`}>
@@ -532,7 +538,7 @@ const handleItemsPerPageChange = (event) => {
   <ul>
     <li className="mb-2">
       <button
-        onClick={handleAddPerson} // Usar la nueva función aquí
+        onClick={handleAddPerson} 
         className="w-full text-left px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 dark:text-white"
       >
         Persons
@@ -598,7 +604,7 @@ const handleItemsPerPageChange = (event) => {
       <div className="text-black dark:text-white">
         Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredData.length)} of {filteredData.length} entries
       </div>
-      {loading ? ( // Mostrar el spinner de carga mientras loading es true
+      {loading ? ( 
         <div className="flex justify-center items-center h-full">
           <div className="loader"></div>
         </div>

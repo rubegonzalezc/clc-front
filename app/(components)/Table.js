@@ -7,8 +7,8 @@ const Table = ({ data, handleEdit, handleDelete, deletingId, columns }) => {
     "Last Name": "lastName",
     "Email": "email",
     "Phone": "phone",
-    "Team": "team",        // Usar "team" para mostrar nombre
-    "Position": "position" // Usar "position" para mostrar nombre
+    "Team": "team",        
+    "Position": "position" 
   };
 
   const normalizeColumnName = (column) => {

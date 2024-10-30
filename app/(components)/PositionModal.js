@@ -24,7 +24,6 @@ const PositionModal = ({ isOpen, onClose, onSubmit, editData }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Verificar si el clic se realiza en el SweetAlert
       if (Swal.isVisible() && Swal.getPopup().contains(event.target)) {
         return;
       }
@@ -57,7 +56,6 @@ const PositionModal = ({ isOpen, onClose, onSubmit, editData }) => {
         title: 'Validation Error',
         text: 'Please correct the errors in the form',
         didClose: () => {
-          // No hacer nada cuando se cierra el SweetAlert
         }
       });
       return;
@@ -65,7 +63,7 @@ const PositionModal = ({ isOpen, onClose, onSubmit, editData }) => {
 
     const positionData = {
       ...formData,
-      id: editData ? editData.id : undefined // Incluir el id si es una edición
+      id: editData ? editData.id : undefined 
     };
 
     onSubmit(positionData)
@@ -79,7 +77,7 @@ const PositionModal = ({ isOpen, onClose, onSubmit, editData }) => {
           title: 'Success',
           text: `Position ${editData ? 'updated' : 'added'} successfully`,
         }).then(() => {
-          onClose(); // Cerrar el modal solo después de mostrar el mensaje de éxito
+          onClose(); 
         });
       })
       .catch(error => {
@@ -101,7 +99,7 @@ const PositionModal = ({ isOpen, onClose, onSubmit, editData }) => {
     setTimeout(() => {
       setIsClosing(false);
       onClose();
-    }, 500); // Duration of the closing animation
+    }, 500); 
   };
 
   return (

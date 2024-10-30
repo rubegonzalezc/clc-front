@@ -77,7 +77,7 @@ const TeamModal = ({ isOpen, onClose, onSubmit, editData }) => {
       title: 'Success',
       text: `Team ${editData ? 'updated' : 'added'} successfully`,
     }).then(() => {
-      onClose(); // Cerrar el modal solo después de mostrar el mensaje de éxito
+      onClose();
     });
   };
 
@@ -86,7 +86,7 @@ const TeamModal = ({ isOpen, onClose, onSubmit, editData }) => {
     setTimeout(() => {
       setIsClosing(false);
       onClose();
-    }, 500); // Duration of the closing animation
+    }, 500);
   };
 
   return (

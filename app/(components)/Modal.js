@@ -32,7 +32,7 @@ const Modal = ({ isOpen, title, children, onClose }) => {
     setTimeout(() => {
       setIsClosing(false);
       onClose();
-    }, 500); // Duration of the closing animation
+    }, 500); 
   };
 
   if (!isOpen && !show) return null;
