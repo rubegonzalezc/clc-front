@@ -216,7 +216,6 @@ export default function PeopleTable() {
   }, [darkMode]);
 
   const handlePersonSubmit = (personData) => {
-    console.log('Submitting person data:', personData); // Añadir este console.log para verificar los datos
     fetch('https://localhost:44352/api/People', {
       method: 'POST',
       headers: {
@@ -237,30 +236,44 @@ export default function PeopleTable() {
           });
         } else {
           return response.text().then(text => {
-            throw new Error(text || response.statusText);
+            try {
+              const errorData = JSON.parse(text);
+              throw new Error(JSON.stringify(errorData));
+            } catch (e) {
+              throw new Error(text);
+            }
           });
         }
       })
       .catch(error => {
-        if (error.message.includes('There is already a person with the same RUT')) {
+        let errorText = 'There was an error adding the person. Please try again.';
+        try {
+          const errorMessage = JSON.parse(error.message);
+          if (errorMessage.errors) {
+            errorText = Object.values(errorMessage.errors).flat().join(' ');
+          } else {
+            errorText = errorMessage.title || errorText;
+          }
+        } catch (e) {
+          errorText = error.message;
+        }
+        if (errorText.includes('There is already a person with the same RUT')) {
           Swal.fire({
             icon: 'error',
             title: 'Duplicate RUT',
             text: 'There is already a person with the same RUT. Please use a different RUT.',
           });
         } else {
-          setMessage('Error adding person');
-          console.error('Error:', error.message);
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'There was an error adding the person. Please try again.',
+            text: errorText,
           });
         }
       });
   };
   const handleAddPosition = () => {
-    setEditData(null); // Limpiar el estado de editData
+    setEditData(null); 
     openPositionModal(); // Abrir el modal de posición
   };
   const handleAddTeam = () => {
@@ -410,7 +423,7 @@ const handleTeamSubmit = (teamData) => {
           setMessage('Position updated successfully');
           setTimeout(() => {
             closePositionModal();
-            loadPositions(); // Recargar datos después de actualizar una posición
+            loadPositions(); 
           }, 2000);
         } else {
           return response.json().then(errorData => {
@@ -425,7 +438,6 @@ const handleTeamSubmit = (teamData) => {
   };
 
   const handleEditTeamSubmit = (teamData) => {
-    console.log('Updating team data:', teamData); // Añadir este console.log para verificar los datos
     fetch(`https://localhost:44352/api/Teams/${teamData.id}`, {
       method: 'PUT',
       headers: {
@@ -438,7 +450,7 @@ const handleTeamSubmit = (teamData) => {
           setMessage('Team updated successfully');
           setTimeout(() => {
             closeTeamModal();
-            loadTeams(); // Recargar datos después de actualizar un equipo
+            loadTeams();
           }, 2000);
         } else {
           return response.text().then(text => {
@@ -460,7 +472,7 @@ const handleTeamSubmit = (teamData) => {
     console.log('People data:', people);
   }, [people]);
 
-  // Mapea los datos de people para incluir los nombres de team y position
+
   const mappedPeople = people.map(person => {
     const team = teams.find(team => team.id === person.teamId);
     const position = positions.find(position => position.id === person.positionId);
@@ -475,8 +487,6 @@ const handleTeamSubmit = (teamData) => {
     console.log('Mapped people data:', mappedPeople);
   }, [mappedPeople]);
 
-  // Filtrar los datos según el término de búsqueda y el filtro seleccionado
-// Filtrar los datos según el término de búsqueda y el filtro seleccionado
 const filteredData = currentView === 'People' ? mappedPeople.filter(person => {
   const value = person[searchFilter];
   return value ? value.toString().toLowerCase().includes(searchTerm.toLowerCase()) : true;
@@ -486,7 +496,7 @@ const filteredData = currentView === 'People' ? mappedPeople.filter(person => {
   return position.name.toLowerCase().includes(searchTerm.toLowerCase());
 });
 
-// Añadir estados para la paginación y el número de elementos por página
+//Paginación y el número de elementos por página
 const [currentPage, setCurrentPage] = useState(1);
 const [itemsPerPage, setItemsPerPage] = useState(10);
 
